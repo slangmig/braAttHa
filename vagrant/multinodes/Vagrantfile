@@ -1,0 +1,47 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+### VARIABLES ###
+
+# IMPORTANT
+# Install Plugin: vagrant plugin install vagrant-proxyconf
+myPROXY     = "http://proxy.corp.tld:8080"
+myNOPROXY   = "localhost,127.0.0.1,::1,192.168.56.0/24,10.0.2.15/24,10.96.0.0/12,10.244.0.0/16,.corp.tld"
+#
+# Define the box to use for the virtual machines
+# Bento                 - 715M    - "bento/ubuntu-20.04" = Ubuntu 20.04 LTS amd64
+# Bento                 - 806M    - "bento/ubuntu-20.04" = Ubuntu 22.04 LTS amd64
+# Official Ubuntu box   - 585M    - "ubuntu/focal64"     = Ubuntu 20.04 LTS amd64
+# Official Ubuntu box   - 613M    - "ubuntu/jammy64"     = Ubuntu 22.04 LTS amd64
+myBOX       = "ubuntu/focal64"
+myHOSTNAME  = "node"
+myMEMORY    = "4096"
+myCPU       = "2"
+myGUI       = false
+myCOUNT     = 3
+myNETWORK   = "192.168.56"
+myIP        = "2"
+### END VARIABLES ###
+#
+Vagrant.configure("2") do |config|
+  config.vm.box         = myBOX
+  config.proxy.http     = myPROXY
+  config.proxy.https    = myPROXY
+  config.proxy.no_proxy = myNOPROXY
+  config.vm.synced_folder '.', '/vagrant', disabled: true
+  (1..myCOUNT).each do |i|
+    config.vm.define "#{myHOSTNAME}-0#{i}" do |subconfig|
+      subconfig.vm.hostname = "#{myHOSTNAME}-0#{i}"
+      subconfig.vm.network "private_network", ip: "#{myNETWORK}.#{myIP}#{+i}"
+      subconfig.vm.provider "virtualbox" do |vb|
+        vb.memory = myMEMORY
+        vb.cpus   = myCPU
+        vb.name   = "#{myNAME} - 0#{i}"
+      end
+    end
+  # Default bootstrap script
+  # config.vm.provision:shell, path: "bootstrap.sh"
+  # Kubernetes pre-setup script
+  # config.vm.provision:shell, path: "k8s.sh"
+  end
+end
