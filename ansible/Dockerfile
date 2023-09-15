@@ -10,7 +10,7 @@ ARG UID=1000
 ARG GID=1000
 
 # Copy needed configuration files
-COPY Files/ /
+COPY etc/ /etc
 
 # APT update & upgrade
 RUN apt-get -qq update && \
