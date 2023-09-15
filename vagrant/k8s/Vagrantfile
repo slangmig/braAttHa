@@ -35,7 +35,7 @@ Vagrant.configure("2") do |config|
   end
   config.vm.provision "shell", inline: <<-SHELL
     apt-get update --quiet
-    mkdir -p /usr/local/share/ca-certificates/sverigesradio
+    mkdir -p /usr/local/share/ca-certificates/corp
     curl -SsfLk -o /usr/local/share/ca-certificates/corp-cert-dir/cer1.crt 'https://url-to-cert-1'
     curl -SsfLk -o /usr/local/share/ca-certificates/corp-cert-dir/cer2.crt 'https://url-to-cert-2'
     update-ca-certificates
