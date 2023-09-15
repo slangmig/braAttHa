@@ -1,0 +1,65 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+### VARIABLES ###
+#
+# IMPORTANT
+# Install Plugin: vagrant plugin install vagrant-proxyconf
+myPROXY     = "http://proxy.org.tld:8080"
+myNOPROXY   = "localhost,127.0.0.1,::1,192.168.56.0/24,.org.tld"
+#
+# Define the box to use for the virtual machines
+# Official Ubuntu box   - 585M    - "ubuntu/focal64" = Ubuntu 20.04 LTS amd64
+# Official Ubuntu box   - 613M    - "ubuntu/jammy64" = Ubuntu 22.04 LTS amd64
+myBOX       = "ubuntu/focal64"
+#
+myHOSTNAME  = "focal"
+myMEMORY    = "4096"
+myCPU       = "2"
+myGUI       = false
+
+### END VARIABLES ###
+
+Vagrant.configure("2") do |config|
+  config.vm.box         = myBOX
+  config.proxy.http     = myPROXY
+  config.proxy.https    = myPROXY
+  config.proxy.no_proxy = myNOPROXY
+  config.vm.hostname    = myHOSTNAME
+  config.vm.network "private_network", ip: "192.168.56.10"
+  config.vm.synced_folder '.', '/vagrant', disabled: true
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory   = myMEMORY
+    vb.cpus     = myCPU
+    vb.gui      = myGUI
+  end
+  config.vm.provision "shell", inline: <<-SHELL
+    apt-get update --quiet
+    mkdir -p /usr/local/share/ca-certificates/sverigesradio
+    curl -SsfLk -o /usr/local/share/ca-certificates/corp-cert-dir/cer1.crt 'https://url-to-cert-1'
+    curl -SsfLk -o /usr/local/share/ca-certificates/corp-cert-dir/cer2.crt 'https://url-to-cert-2'
+    update-ca-certificates
+    echo "vm.swappiness=0" | tee /etc/sysctl.d/10-swapiness.conf &>/dev/null
+    /sbin/sysctl --quiet --system  &>/dev/null
+    # Install my public ssh key
+    echo 'XXXXXXXXXXXXXXXXXX' | tee -a /home/vagrant/.ssh/authorized_keys &>/dev/null
+    # Install docker
+    apt-get install -y docker.io
+    # Install kubectl
+    curl -LO https://cdn.dl.k8s.io/release/v1.25.11/bin/linux/amd64/kubectl
+    chmod +x ./kubectl
+    sudo mv ./kubectl /usr/local/bin/kubectl
+    # Install KinD
+    curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64
+    chmod +x ./kind
+    sudo mv ./kind /usr/local/bin/kind
+    # Install Helm
+    mkdir /tmp/helm-install
+    cd /tmp/helm-install
+    curl -LO https://get.helm.sh/helm-v3.12.3-linux-amd64.tar.gz
+    tar -zxf helm-v3.12.3-linux-amd64.tar.gz
+    sudo mv linux-amd64/helm /usr/local/bin/helm
+    cd
+    rm -fr /tmp/helm-install
+  SHELL
+end
