@@ -1,0 +1,55 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+### VARIABLES ###
+#
+# IMPORTANT
+# Install Plugin: vagrant plugin install vagrant-proxyconf
+myPROXY     = "http://proxy.sr.se:8080"
+myNOPROXY   = "localhost,127.0.0.1,::1,192.168.56.0/24,.sr.se"
+#
+# Define the box to use for the virtual machines
+# Official Ubuntu box   - 585M    - "ubuntu/focal64" = Ubuntu 20.04 LTS amd64
+# Official Ubuntu box   - 613M    - "ubuntu/jammy64" = Ubuntu 22.04 LTS amd64
+myMEMORY    = "2048"
+myCPU       = "2"
+myGUI       = false
+myNETWORK   = "192.168.56.1"
+#
+### END VARIABLES ###
+#
+vm1 = { 'name' => "V Ubuntu 20.04 LTS", 'hostname' => "node-01", 'box' => "ubuntu/focal64", 'ip' => "#{myNETWORK}1" }
+vm2 = { 'name' => "V Ubuntu 22.04 LTS", 'hostname' => "node-02", 'box' => "ubuntu/jammy64", 'ip' => "#{myNETWORK}2" }
+vms= [ vm1, vm2 ]
+#
+Vagrant.configure("2") do |config|
+  config.proxy.http     = myPROXY
+  config.proxy.https    = myPROXY
+  config.proxy.no_proxy = myNOPROXY
+  config.vm.synced_folder '.', '/vagrant', disabled: true
+  vms.each do |node|
+    vm_name = node['name']
+    vm_hostname = node['hostname']
+    vm_box = node['box']
+    vm_ip = node['ip']
+    config.vm.define vm_hostname do |subconfig|
+      subconfig.vm.hostname = "#{vm_hostname}"
+      subconfig.vm.box      = "#{vm_box}"
+      subconfig.vm.network "private_network", ip: "#{vm_ip}"
+      subconfig.vm.provider 'virtualbox' do |vb|
+        vb.name   = "#{vm_name}"
+        vb.memory = myMEMORY
+        vb.cpus   = myCPU
+      end
+    end
+  end
+  config.vm.provision "shell", inline: <<-SHELL
+    apt-get update --quiet --quiet
+    mkdir -p /usr/local/share/ca-certificates/corp
+    curl -SsfLk -o /usr/local/share/ca-certificates/corp/CA_Root.crt 'https://-url-'
+    curl -SsfLk -o /usr/local/share/ca-certificates/corp/CA_Issuing.crt 'https://-url-'
+    update-ca-certificates
+    echo "vm.swappiness=5" | tee /etc/sysctl.d/10-swapiness.conf
+    /sbin/sysctl --quiet --system &> /dev/null
+  SHELL
+end
