@@ -17,7 +17,7 @@ if [ -f "/$SWAPFILE" ]; then
 fi
 
 # Install SR CA trust certificates
-mkdir -p /usr/local/share/ca-certificates/sverigesradio
-curl -SsfLk -o /usr/local/share/ca-certificates/corp-cert/CA_Root.crt 'https://some-url'
-curl -SsfLk -o /usr/local/share/ca-certificates/corp-cert/CA_Issuing.crt 'https://some-url'
+mkdir -p /usr/local/share/ca-certificates/corp
+curl -SsfLk -o /usr/local/share/ca-certificates/corp-cert/CA_Root.crt 'https://-url-'
+curl -SsfLk -o /usr/local/share/ca-certificates/corp-cert/CA_Issuing.crt 'https://-url-'
 update-ca-certificates
