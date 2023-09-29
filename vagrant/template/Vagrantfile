@@ -1,0 +1,120 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+### VARIABLES ###
+##  IMPORTANT!!! 
+#   Install vagrant-proxyconf Plugin
+#   vagrant plugin install vagrant-proxyconf
+#
+# Define the box to use for the virtual machines
+# Bento CentOS 7 box  - 372M - "bento/centos-7.9" = CentOS 7 amd64
+# Official Ubuntu box - 289M - "ubuntu/xenial64"  =  Ubuntu 16.04 LTS amd64
+# Official Ubuntu box - 356M - "ubuntu/bionic64"  =  Ubuntu 18.04 LTS amd64
+# Official Ubuntu box - 580M - "ubuntu/focal64"   =  Ubuntu 20.04 LTS amd64
+# Official Ubuntu box - 605M - "ubuntu/jammy64"   =  Ubuntu 22.04 LTS amd64
+myPROXY     = "http://<proxy>:<port>"
+myNOPROXY   = "localhost,127.0.0.1,::1,192.168.56.0/24,.example.com"
+myBOX       = "ubuntu/focal64"
+myHOSTNAME  = "focal"
+myMEMORY    = "6144"
+myCPU       = "4"
+myGUI       = false
+myNETWORK   = "192.168.56.1"
+### END VARIABLES ###
+
+### One Node Deployment
+Vagrant.configure("2") do |config|
+  config.vm.box         = myBOX
+  config.proxy.http     = myPROXY
+  config.proxy.https    = myPROXY
+  config.proxy.no_proxy = myNOPROXY
+  config.vm.hostname    = myHOSTNAME
+  config.vm.network "private_network", ip: "192.168.56.10"
+  config.vm.synced_folder '.', '/vagrant', disabled: true
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory   = myMEMORY
+    vb.cpus     = myCPU
+    vb.gui      = myGUI
+  end
+  config.vm.provision:shell, path: "bootstrap.sh"
+end
+
+### Two Node Deployment
+# vm1 = { 'name' => "V Ubuntu 20.04 LTS", 'hostname' => "node-01", 'box' => "ubuntu/focal64", 'ip' => "#{myNETWORK}1" }
+# vm2 = { 'name' => "V Ubuntu 22.04 LTS", 'hostname' => "node-02", 'box' => "ubuntu/jammy64", 'ip' => "#{myNETWORK}2" }
+# vms= [ vm1, vm2 ]
+# #
+# Vagrant.configure("2") do |config|
+#   config.proxy.http     = myPROXY
+#   config.proxy.https    = myPROXY
+#   config.proxy.no_proxy = myNOPROXY
+#   config.vm.synced_folder '.', '/vagrant', disabled: true
+#   #
+#   vms.each do |node|
+#     vm_name = node['name']
+#     vm_hostname = node['hostname']
+#     vm_box = node['box']
+#     vm_ip = node['ip']
+#     #
+#     config.vm.define vm_hostname do |subconfig|
+#       subconfig.vm.hostname = "#{vm_hostname}"
+#       subconfig.vm.box      = "#{vm_box}"
+#       subconfig.vm.network "private_network", ip: "#{vm_ip}"
+#       #
+#       subconfig.vm.provider 'virtualbox' do |vb|
+#         vb.name   = "#{vm_name}"
+#         vb.memory = myMEMORY
+#         vb.cpus   = myCPU
+#       end
+#     end
+#   end
+#   config.vm.provision "shell", inline: <<-SHELL
+#     apt-get update --quiet --quiet
+#     echo "vm.swappiness=0" | tee /etc/sysctl.d/10-swapiness.conf
+#     /sbin/sysctl --quiet --system &> /dev/null
+#     # Install my public ssh key
+#     echo 'ssh-rsa xxxxxxxxxxxx linux-key' | tee -a /home/vagrant/.ssh/authorized_keys &>/dev/null
+#     echo 'ssh-rsa zzzzzzzzzzzz windows-key' | tee -a /home/vagrant/.ssh/authorized_keys &>/dev/null
+#   SHELL
+#   #
+#   config.vm.provision:shell, path: "bootstrap.sh"
+# end
+
+### Three Node Deployment
+# vm1 = { 'name' => "V Ubuntu 20.04 LTS", 'hostname' => "node-01", 'box' => "ubuntu/focal64", 'ip' => "#{myNETWORK}1" }
+# vm2 = { 'name' => "V Ubuntu 22.04 LTS", 'hostname' => "node-02", 'box' => "ubuntu/jammy64", 'ip' => "#{myNETWORK}2" }
+# vm3 = { 'name' => "V CentOS 7", 'hostname' => "node-03", 'box' => "bento/centos-7.9", 'ip' => "#{myNETWORK}2" }
+# vms= [ vm1, vm2, vm3 ]
+# #
+# Vagrant.configure("2") do |config|
+#   config.proxy.http     = myPROXY
+#   config.proxy.https    = myPROXY
+#   config.proxy.no_proxy = myNOPROXY
+#   config.vm.synced_folder '.', '/vagrant', disabled: true
+#   #
+#   vms.each do |node|
+#     vm_name = node['name']
+#     vm_hostname = node['hostname']
+#     vm_box = node['box']
+#     vm_ip = node['ip']
+#     #
+#     config.vm.define vm_hostname do |subconfig|
+#       subconfig.vm.hostname = "#{vm_hostname}"
+#       subconfig.vm.box      = "#{vm_box}"
+#       subconfig.vm.network "private_network", ip: "#{vm_ip}"
+#       #
+#       subconfig.vm.provider 'virtualbox' do |vb|
+#         vb.name   = "#{vm_name}"
+#         vb.memory = myMEMORY
+#         vb.cpus   = myCPU
+#       end
+#     end
+#   end
+#   config.vm.provision "shell", inline: <<-SHELL
+#     apt-get update --quiet --quiet
+#     echo "vm.swappiness=5" | tee /etc/sysctl.d/10-swapiness.conf
+#     /sbin/sysctl --quiet --system &> /dev/null
+#   SHELL
+#   #
+#   config.vm.provision:shell, path: "bootstrap.sh"
+#end
